@@ -1,0 +1,41 @@
+name = "website-analyser"
+main = "src/index.ts"
+compatibility_date = "2026-08-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Paid plan recommended: the free plan's 10ms CPU limit is tight for HTML parsing + fingerprinting.
+# [limits]
+# cpu_ms = 60000
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+run_worker_first = ["/api/*"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "website-analyser"
+# Run `npx wrangler d1 create website-analyser` and paste the id here.
+database_id = "00000000-0000-0000-0000-000000000000"
+migrations_dir = "migrations"
+
+[[queues.producers]]
+binding = "ANALYSIS_QUEUE"
+queue = "website-analyser-jobs"
+
+[[queues.consumers]]
+queue = "website-analyser-jobs"
+# One site per invocation keeps each run under the subrequest limit.
+max_batch_size = 1
+max_batch_timeout = 2
+max_retries = 2
+
+# Optional: Workers AI as a free LLM provider for the outreach hook.
+# [ai]
+# binding = "AI"
+
+[vars]
+# Optional non-secret config. Secrets go in .dev.vars locally / `wrangler secret put` in production:
+#   ACCESS_TOKEN        - protects /api/* (strongly recommended once deployed)
+#   PAGESPEED_API_KEY   - Google PageSpeed Insights key (can also be set in the Settings UI)
+#   CF_ACCOUNT_ID, CF_API_TOKEN - enable Browser Rendering for JS-heavy / scraper-blocking sites

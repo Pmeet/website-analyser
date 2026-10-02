@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Website Analyser</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='14' cy='14' r='9' fill='none' stroke='%232f6fed' stroke-width='3.5'/><path d='M21 21l7 7' stroke='%232f6fed' stroke-width='3.5' stroke-linecap='round'/></svg>">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">Website Analyser</div>
+    <nav class="tabs" role="tablist">
+      <button role="tab" data-tab="analyze" aria-selected="true">Analyse</button>
+      <button role="tab" data-tab="batch" aria-selected="false">Batch</button>
+      <button role="tab" data-tab="settings" aria-selected="false">Settings</button>
+    </nav>
+  </header>
+
+  <div id="banner" class="banner" hidden></div>
+
+  <main>
+    <!-- ── Analyse ─────────────────────────────────────────── -->
+    <section id="tab-analyze" class="tab">
+      <form id="analyze-form" class="card row-form">
+        <input id="analyze-url" type="text" placeholder="acme.co.uk" autocomplete="off" required>
+        <label class="check"><input id="analyze-fast" type="checkbox"> Skip PageSpeed (fast)</label>
+        <button class="primary" type="submit">Analyse</button>
+      </form>
+      <p id="analyze-status" class="muted" hidden></p>
+
+      <div id="analyze-result" hidden>
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-head">
+              <h2>Report</h2>
+              <div class="actions">
+                <button class="ghost" data-copy="report-short">Copy</button>
+              </div>
+            </div>
+            <pre id="report-short" class="report"></pre>
+          </div>
+          <div class="card">
+            <h2>Scores</h2>
+            <div id="score-tiles" class="tiles"></div>
+            <h3>Stack</h3>
+            <div id="stack-chips" class="chips"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Findings</h2>
+          <ul id="findings" class="findings"></ul>
+        </div>
+
+        <details class="card">
+          <summary>Full text report</summary>
+          <div class="actions"><button class="ghost" data-copy="report-full">Copy</button><button class="ghost" id="download-json">Download JSON</button></div>
+          <pre id="report-full" class="report"></pre>
+        </details>
+      </div>
+    </section>
+
+    <!-- ── Batch ──────────────────────────────────────────── -->
+    <section id="tab-batch" class="tab" hidden>
+      <form id="batch-form" class="card">
+        <h2>New batch</h2>
+        <input id="batch-name" type="text" placeholder="Name (optional), e.g. Dubai dentists">
+        <textarea id="batch-urls" rows="8" placeholder="One URL per line (up to 200)"></textarea>
+        <div class="actions"><span id="batch-count" class="muted">0 URLs</span><button class="primary" type="submit">Start batch</button></div>
+      </form>
+
+      <div id="batch-view" class="card" hidden>
+        <div class="card-head">
+          <h2 id="batch-title">Batch</h2>
+          <div class="actions">
+            <button class="ghost" id="batch-retry">Retry failed</button>
+            <a class="button ghost" id="export-csv">CSV</a>
+            <a class="button ghost" id="export-txt">TXT</a>
+            <a class="button ghost" id="export-json">JSON</a>
+          </div>
+        </div>
+        <div class="progress"><div id="batch-progress"></div></div>
+        <p id="batch-summary" class="muted"></p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Site</th><th>Status</th><th>Platform</th><th>Perf</th><th>SEO</th><th>Sec</th><th>Email</th><th>Contact</th><th>Hook</th></tr></thead>
+            <tbody id="batch-rows"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Previous batches</h2>
+        <ul id="batch-list" class="list"></ul>
+      </div>
+    </section>
+
+    <!-- ── Settings ───────────────────────────────────────── -->
+    <section id="tab-settings" class="tab" hidden>
+      <form id="settings-form">
+        <div class="card">
+          <h2>Analysis</h2>
+          <label>Google PageSpeed API key
+            <input name="pagespeedApiKey" type="password" autocomplete="off" placeholder="Optional but recommended — the keyless quota is tiny">
+          </label>
+          <p class="hint">Free from <a href="https://developers.google.com/speed/docs/insights/v5/get-started" target="_blank" rel="noopener">Google Cloud</a> (enable "PageSpeed Insights API"). <span id="psi-env-note"></span></p>
+          <div class="grid-3">
+            <label>Strategy
+              <select name="strategy"><option value="mobile">Mobile</option><option value="desktop">Desktop</option></select>
+            </label>
+            <label>Broken-link sample
+              <input name="brokenLinkSample" type="number" min="0" max="20">
+            </label>
+            <div class="stack">
+              <label class="check"><input name="crawlContactPages" type="checkbox"> Crawl contact/about pages</label>
+              <label class="check"><input name="runObservatory" type="checkbox"> Mozilla Observatory scan</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>AI outreach hook <span class="muted small">(optional)</span></h2>
+          <p class="hint">Without AI, the hook is built from a template using the worst finding.</p>
+          <div class="grid-3">
+            <label>Provider
+              <select name="ai.provider">
+                <option value="none">None (template)</option>
+                <option value="anthropic">Anthropic (Claude)</option>
+                <option value="openai-compatible">OpenAI-compatible (OpenAI, Gemini, Groq, OpenRouter…)</option>
+                <option value="workers-ai">Cloudflare Workers AI</option>
+              </select>
+            </label>
+            <label data-ai="openai-compatible">Preset
+              <select name="ai.preset" id="ai-preset"></select>
+            </label>
+            <label data-ai="anthropic openai-compatible workers-ai">Model
+              <input name="ai.model" type="text" autocomplete="off" id="ai-model">
+            </label>
+          </div>
+          <label data-ai="openai-compatible">Base URL
+            <input name="ai.baseUrl" type="url" placeholder="https://api.example.com/v1" id="ai-baseurl">
+          </label>
+          <label data-ai="anthropic openai-compatible">API key
+            <input name="ai.apiKey" type="password" autocomplete="off">
+          </label>
+          <p class="hint" id="ai-hint"></p>
+          <label>About you / your offer
+            <textarea name="outreach.senderContext" rows="3" placeholder="e.g. I run a small Dubai agency that builds fast Webflow sites and WhatsApp/booking automations for clinics."></textarea>
+          </label>
+          <div class="grid-2">
+            <label>Tone <input name="outreach.tone" type="text"></label>
+            <label>Extra instructions <input name="outreach.extraInstructions" type="text" placeholder="e.g. write in British English"></label>
+          </div>
+        </div>
+
+        <div class="actions sticky">
+          <span id="settings-status" class="muted"></span>
+          <button type="button" class="ghost" id="test-ai">Test AI</button>
+          <button class="primary" type="submit">Save settings</button>
+        </div>
+      </form>
+
+      <div class="card">
+        <h2>Environment</h2>
+        <ul id="env-status" class="list"></ul>
+      </div>
+    </section>
+  </main>
+
+  <dialog id="token-dialog">
+    <form method="dialog" id="token-form">
+      <h2>Access token</h2>
+      <p class="muted">This deployment is protected. Enter the ACCESS_TOKEN you set with <code>wrangler secret put</code>.</p>
+      <input id="token-input" type="password" autocomplete="current-password" required>
+      <div class="actions"><button class="primary">Continue</button></div>
+    </form>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>

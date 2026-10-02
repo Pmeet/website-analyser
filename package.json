@@ -1,0 +1,28 @@
+{
+  "name": "website-analyser",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Cloudflare Worker that audits a website (performance, SEO, security, email, tech stack, automation gaps, contacts) and writes a plain-text outreach report.",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "db:migrate:local": "wrangler d1 migrations apply website-analyser --local",
+    "db:migrate:remote": "wrangler d1 migrations apply website-analyser --remote",
+    "fingerprints": "node scripts/update-fingerprints.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.131.0",
+    "tldts": "^7.4.16"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.22.0",
+    "@cloudflare/workers-types": "^5.20261002.1",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.11",
+    "wrangler": "^4.146.0"
+  }
+}
